@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    volumes:
+      - ./database/postgres_data:/var/lib/postgresql/data
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: qwer1234!
+      POSTGRES_DB: guestbook
+    networks:
+      - app-network
+
+  api:
+    # 1) Build 단계: 프로젝트 루트의 Dockerfile 참조
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nest-api
+    restart: always
+    # 2) PostgreSQL이 준비될 때까지 대기
+    depends_on:
+      - postgres
+    # 3) 환경 변수 (직접 선언하거나, .env 파일 사용 권장)
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: '5432'
+      DATABASE_USER: admin
+      DATABASE_PASSWORD: qwer1234!
+      DATABASE_NAME: guestbook
+      PORT: '3001'
+    # 4) 호스트와 컨테이너 포트 매핑 (Nest 기본 3000 포트)
+    ports:
+      - '3001:3001'
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
